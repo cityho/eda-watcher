@@ -8,6 +8,8 @@ CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 GUIDE="$CLAUDE_DIR/eda-watcher.md"
 IMPORT_LINE="@eda-watcher.md"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVE_PY="$REPO_DIR/serve.py"
 
 mkdir -p "$CLAUDE_DIR"
 touch "$CLAUDE_MD"
@@ -50,8 +52,25 @@ entries.append({
 mpath.write_text(json.dumps(entries, indent=2))
 ```
 
+## After registering: make sure the board is showing
+
+The board only displays what a running server reads from the manifest. After
+appending an entry, check whether the board is up; if not, start it, then give
+the user the link.
+
+```bash
+# Board is at 127.0.0.1:8765. If it does not answer, start it in the
+# background (stdlib only, no installs), then hand the user the link.
+if ! curl -s -o /dev/null http://127.0.0.1:8765/ ; then
+  nohup python3 "__SERVE_PY__" >/tmp/eda-watcher.log 2>&1 &
+fi
+```
+
+Then always tell the user where to look: **http://127.0.0.1:8765**
+
 Full reference: https://github.com/cityho/eda-watcher
 EOF
+sed -i.bak "s#__SERVE_PY__#$SERVE_PY#g" "$GUIDE" && rm -f "$GUIDE.bak"
 echo "Wrote guide: $GUIDE"
 
 if grep -qF "$IMPORT_LINE" "$CLAUDE_MD"; then
