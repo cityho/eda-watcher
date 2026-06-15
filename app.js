@@ -25,7 +25,7 @@ function hideBanner() {
 
 async function poll() {
   try {
-    const res = await fetch("/api/manifest");
+    const res = await fetch("/api/manifest", { cache: "no-store" });
     if (!res.ok) {
       showBanner(`manifest error (${res.status}): ${await res.text()}`);
       $status.textContent = "error";
@@ -61,6 +61,7 @@ function renderList() {
     div.className = "entry" + (e.id === selectedId ? " active" : "");
     const created = (e.created || "").replace("T", " ").slice(0, 19);
     div.innerHTML = `
+      <button class="del" title="Remove from board">×</button>
       <div class="title"></div>
       <div class="meta"></div>
       ${e.note ? '<div class="note"></div>' : ""}`;
@@ -74,8 +75,49 @@ function renderList() {
       renderList();
       renderSelected();
     };
+    div.querySelector(".del").onclick = (ev) => {
+      ev.stopPropagation();
+      deleteEntry(e);
+    };
     $list.appendChild(div);
   }
+}
+
+async function deleteEntry(e) {
+  if (!confirm(`Remove "${e.title || e.id}" from the board?\n(manifest only — your files are NOT deleted)`)) {
+    return;
+  }
+  try {
+    const res = await fetch("/api/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: e.id }),
+    });
+    if (!res.ok) {
+      toast(`Delete failed (${res.status}): ${await res.text()}`, true);
+      return;
+    }
+    // optimistic local update; next poll confirms
+    entries = entries.filter((x) => x.id !== e.id);
+    if (selectedId === e.id) {
+      selectedId = entries.length ? entries[0].id : null;
+      activeScript = null;
+    }
+    renderList();
+    renderSelected();
+    toast(`Removed "${e.title || e.id}" (files kept on disk)`);
+  } catch (err) {
+    toast(`Delete error: ${err.message}`, true);
+  }
+}
+
+let toastTimer = null;
+function toast(msg, isError) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (isError ? " error" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3500);
 }
 
 function renderSelected() {

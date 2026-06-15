@@ -4,8 +4,9 @@ Local 2-panel research board. View Claude Code session artifacts — the
 Python scripts on the left, the images they produced on the right —
 without leaving your browser.
 
-- **Read-only.** The server only ever `GET`s. It never writes the manifest
-  or touches any artifact file.
+- **Artifact-safe.** The server never touches your script/image files. The
+  only write it performs is removing an entry from the manifest when you
+  click the `×` button on a card.
 - **Zero dependencies.** Python stdlib HTTP server + vanilla HTML/JS.
 - **Path-agnostic.** Artifacts can live anywhere (tmp, worktree, repo) —
   they are referenced by absolute path in a manifest.
@@ -22,7 +23,9 @@ appear without reloading.
 
 ## Manifest
 
-Single source of truth, written **only by Claude** during research:
+Single source of truth. Entries are appended by Claude during research;
+the board removes entries when you click `×` on a card (entry only — the
+files it references stay on disk).
 
 ```
 ~/.claude/eda-watcher/manifest.json

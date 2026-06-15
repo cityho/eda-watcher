@@ -32,6 +32,19 @@ def load_manifest():
     return sorted(entries, key=lambda e: e.get("created", ""), reverse=True)
 
 
+def delete_entry(entry_id):
+    """Remove the entry with the given id from the manifest. Never touches the
+    referenced script/image files on disk. Returns True if an entry was removed."""
+    if not MANIFEST_PATH.exists():
+        return False
+    entries = json.loads(MANIFEST_PATH.read_text())
+    kept = [e for e in entries if e.get("id") != entry_id]
+    if len(kept) == len(entries):
+        return False
+    MANIFEST_PATH.write_text(json.dumps(kept, indent=2))
+    return True
+
+
 def allowlisted_paths(entries):
     """Set of absolute paths referenced by any entry's scripts/images."""
     paths = set()
@@ -59,6 +72,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
 
@@ -83,6 +97,30 @@ class Handler(BaseHTTPRequestHandler):
             self._api_file(parse_qs(parsed.query))
         else:
             self._send(404, "not found")
+
+    def do_POST(self):
+        if urlparse(self.path).path == "/api/delete":
+            self._api_delete()
+        else:
+            self._send(404, "not found")
+
+    def _api_delete(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            payload = json.loads(self.rfile.read(length) or b"{}")
+        except json.JSONDecodeError:
+            self._send(400, "invalid json body")
+            return
+        entry_id = payload.get("id")
+        if not entry_id:
+            self._send(400, "missing id")
+            return
+        removed = delete_entry(entry_id)
+        if not removed:
+            self._send(404, "id not found")
+            return
+        self._send(200, json.dumps({"deleted": entry_id}),
+                   "application/json; charset=utf-8")
 
     def _api_manifest(self):
         try:

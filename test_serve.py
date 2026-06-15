@@ -67,6 +67,30 @@ def test_guess_mime(case, filename, expected):
     assert serve.guess_mime(filename) == expected
 
 
+def test_delete_entry_removes_and_keeps_files(manifest, tmp_path):
+    script = tmp_path / "a.py"
+    script.write_text("x = 1")
+    manifest([
+        {"id": "keep", "created": "2026-06-15T09:00:00", "scripts": [str(script)]},
+        {"id": "drop", "created": "2026-06-15T10:00:00", "scripts": [str(script)]},
+    ])
+    assert serve.delete_entry("drop") is True
+    remaining = serve.load_manifest()
+    assert [e["id"] for e in remaining] == ["keep"]
+    # referenced file is NOT deleted
+    assert script.exists()
+
+
+def test_delete_entry_unknown_id_returns_false(manifest):
+    manifest([{"id": "a", "created": "2026-06-15T09:00:00"}])
+    assert serve.delete_entry("nope") is False
+    assert [e["id"] for e in serve.load_manifest()] == ["a"]
+
+
+def test_delete_entry_missing_manifest_returns_false(manifest):
+    assert serve.delete_entry("anything") is False
+
+
 @pytest.mark.parametrize(
     "case, in_manifest, on_disk, expected_status",
     [
