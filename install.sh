@@ -24,9 +24,12 @@ When you generate a research script + image(s) the user should see, append
 an entry to `~/.claude/eda-watcher/manifest.json` so it shows up on the
 local board. Only do this for artifacts worth showing.
 
+- Manifest path: `~/.claude/eda-watcher/manifest.json` (one global file
+  shared by every project; create the dir on first write).
 - Paths must be **absolute**; `id` should be `{project}-{slug}` to avoid
-  collisions across projects (one global manifest is shared by all).
+  collisions across projects.
 - Re-appending the same `id` replaces that entry.
+- Board server needs only Python 3.7+ stdlib (no pip installs).
 - Entry schema and an append snippet: https://github.com/cityho/eda-watcher
 <!-- /eda-watcher -->
 EOF

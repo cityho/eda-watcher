@@ -7,7 +7,8 @@ without leaving your browser.
 - **Artifact-safe.** The server never touches your script/image files. The
   only write it performs is removing an entry from the manifest when you
   click the `×` button on a card.
-- **Zero dependencies.** Python stdlib HTTP server + vanilla HTML/JS.
+- **Zero dependencies.** Python 3.7+ stdlib HTTP server + vanilla HTML/JS;
+  no pip installs.
 - **Path-agnostic.** Artifacts can live anywhere (tmp, worktree, repo) —
   they are referenced by absolute path in a manifest.
 
