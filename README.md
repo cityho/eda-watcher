@@ -21,12 +21,13 @@ bash install.sh        # registers eda-watcher in your global ~/.claude/CLAUDE.m
 python serve.py        # start the board -> http://127.0.0.1:8765
 ```
 
-`install.sh` appends a short usage section to `~/.claude/CLAUDE.md` (the
-file Claude Code loads into every project session), so from then on Claude
-— in any project — knows to append its research plots to the shared
-manifest. It is idempotent: re-running it does nothing if already
-installed. The board itself is a single process you keep running locally;
-every project writes to the one global manifest, so they all show up here.
+`install.sh` writes a usage guide to `~/.claude/eda-watcher.md` and imports
+it from `~/.claude/CLAUDE.md` via an `@eda-watcher.md` line (the file Claude
+Code loads into every project session), so from then on Claude — in any
+project — knows to append its research plots to the shared manifest. It is
+idempotent: re-running refreshes the guide and won't duplicate the import.
+The board itself is a single process you keep running locally; every
+project writes to the one global manifest, so they all show up here.
 
 ## Run
 
