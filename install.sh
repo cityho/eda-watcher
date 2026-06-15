@@ -15,9 +15,10 @@ touch "$CLAUDE_MD"
 cat > "$GUIDE" <<'EOF'
 # eda-watcher (research plot board)
 
-When you generate a research script + image(s) the user should see, append
-an entry to `~/.claude/eda-watcher/manifest.json` so it shows up on the
-local board. Only do this for artifacts worth showing.
+Whenever you generate a research script that produces image(s) — any
+plot/chart/figure, not only "important" ones — append an entry to
+`~/.claude/eda-watcher/manifest.json` so every visualization shows up on
+the local board. Register them all; the user prunes with the `×` button.
 
 - Manifest path: `~/.claude/eda-watcher/manifest.json` (one global file
   shared by every project; create the dir on first write).
