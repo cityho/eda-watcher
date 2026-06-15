@@ -2,11 +2,16 @@
 
 const POLL_MS = 3000;
 const fileURL = (p) => `/api/file?path=${encodeURIComponent(p)}`;
+// Images are overwritten in place (same path) when a plot is re-rendered, so
+// the manifest does not change and a plain src would stay cached. Append a
+// per-poll token to force a refetch; the server already sends no-store.
+const imgURL = (p) => `${fileURL(p)}&t=${imgTick}`;
 const basename = (p) => p.split("/").pop();
 
 let entries = [];
 let selectedId = null;
 let activeScript = null; // abs path of active code sub-tab
+let imgTick = 0;         // bumped each poll to bust the browser image cache
 
 const $list = document.getElementById("entry-list");
 const $tabs = document.getElementById("tabs");
@@ -14,6 +19,8 @@ const $code = document.getElementById("code-wrap");
 const $right = document.getElementById("right");
 const $banner = document.getElementById("banner");
 const $status = document.getElementById("status-text");
+const $reloadCode = document.getElementById("reload-code");
+const $reloadImg = document.getElementById("reload-img");
 
 function showBanner(msg) {
   $banner.textContent = msg;
@@ -44,6 +51,10 @@ async function poll() {
       }
       renderSelected();
     }
+    // Bump the token and re-point shown images so an in-place overwrite (same
+    // path, unchanged manifest) is picked up without a full re-render.
+    imgTick++;
+    refreshImages();
   } catch (e) {
     showBanner(`connection lost: ${e.message}`);
     $status.textContent = "offline";
@@ -178,6 +189,15 @@ async function loadCode(path) {
   }
 }
 
+// Re-point already-rendered images at a fresh token so the browser refetches
+// the file from disk. Only updates src if the path is still valid (skips the
+// "file not found" placeholders, which carry no data-path).
+function refreshImages() {
+  for (const el of $right.querySelectorAll("img[data-path]")) {
+    el.src = imgURL(el.dataset.path);
+  }
+}
+
 function renderImages(entry) {
   const images = entry.images || [];
   if (!images.length) {
@@ -193,8 +213,9 @@ function renderImages(entry) {
     name.textContent = basename(img);
     name.title = img;
     const el = document.createElement("img");
-    el.src = fileURL(img);
-    el.onclick = () => window.open(fileURL(img), "_blank");
+    el.dataset.path = img;
+    el.src = imgURL(img);
+    el.onclick = () => window.open(imgURL(img), "_blank");
     el.onerror = () => {
       el.replaceWith(
         Object.assign(document.createElement("div"), {
@@ -208,6 +229,23 @@ function renderImages(entry) {
     $right.appendChild(card);
   }
 }
+
+// Manual reload buttons: same disk-refresh the poll does, on demand. The
+// brief .spin class gives visual feedback that the click registered.
+function spin(btn) {
+  btn.classList.add("spin");
+  setTimeout(() => btn.classList.remove("spin"), 300);
+}
+$reloadCode.onclick = () => {
+  spin($reloadCode);
+  const entry = entries.find((e) => e.id === selectedId);
+  if (entry) renderTabs(entry); // re-fetches the active script (server no-store)
+};
+$reloadImg.onclick = () => {
+  spin($reloadImg);
+  imgTick++;
+  refreshImages();
+};
 
 poll();
 setInterval(poll, POLL_MS);
