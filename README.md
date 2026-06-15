@@ -1,5 +1,9 @@
 # eda-watcher
 
+> **Currently Claude Code only.**
+
+![architecture](docs/architecture.png)
+
 Local 2-panel research board to view agent session artifacts.
 
 When Claude Code writes a plot while coding, both the image and the
@@ -7,6 +11,8 @@ throwaway script that made it usually land in a tmp job dir that gets
 auto-cleaned the moment the session ends — gone before you ever look at
 them. This board catches them while they still exist: the Python scripts
 on the left, the images they produced on the right, in your browser.
+
+![eda-watcher board](docs/screenshot.png)
 
 - **Artifact-safe.** The server never touches your script/image files. The
   only write it performs is removing an entry from the manifest when you
