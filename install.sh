@@ -22,11 +22,20 @@ plot/chart/figure, not only "important" ones — append an entry to
 `~/.claude/eda-watcher/manifest.json` so every visualization shows up on
 the local board. Register them all; the user prunes with the `×` button.
 
+**One harness run = one tab = one `id`.** Use a single stable `id` for
+the whole run and put everything under it: all of the run's images in that
+entry's `images` array, all its scripts in `scripts`. Do **not** create a
+separate entry per image — one `id`, one tab. Re-running with the same
+`id` replaces that tab instead of spawning many. Only use a new `id` for a
+genuinely separate run.
+
 - Manifest path: `~/.claude/eda-watcher/manifest.json` (one global file
   shared by every project; create the dir on first write).
 - Paths must be **absolute**; `id` should be `{project}-{slug}` to avoid
   collisions across projects.
 - Re-appending the same `id` replaces that entry.
+- `images` and `scripts` are arrays — one entry holds all of a run's
+  visuals and code, rendered as sub-tabs.
 - Board server needs only Python 3.7+ stdlib (no pip installs).
 
 Entry fields: `id` (unique slug, prefer `{project}-{slug}`), `title`,
@@ -42,11 +51,12 @@ mpath.parent.mkdir(parents=True, exist_ok=True)
 entries = json.loads(mpath.read_text()) if mpath.exists() else []
 entries = [e for e in entries if e["id"] != "my-id"]  # idempotent replace
 entries.append({
-    "id": "my-id",
+    "id": "my-id",  # one stable id for the whole run
     "title": "Human readable title",
     "created": datetime.datetime.now().isoformat(timespec="seconds"),
-    "scripts": [os.path.abspath("sweep.py")],
-    "images": [os.path.abspath("out.png")],
+    # all of this run's scripts + images go in ONE entry (arrays):
+    "scripts": [os.path.abspath("sweep.py"), os.path.abspath("plot.py")],
+    "images": [os.path.abspath("a.png"), os.path.abspath("b.png")],
     "note": "",
 })
 mpath.write_text(json.dumps(entries, indent=2))
